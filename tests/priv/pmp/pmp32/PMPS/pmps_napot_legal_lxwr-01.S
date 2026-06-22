@@ -28,10 +28,10 @@
 # params:
 #   MXLEN: 32
 #   NUM_PMP_ENTRIES: '>0'
-# MARCH: rv32i_zicsr
+# MARCH: rv32i_zicsr_zifencei
 ##### END_TEST_CONFIG #####
 
-#define TEST_FILE "pmps_napot_legal_lxwr.S"
+#define TEST_FILE "pmps_napot_legal_lxwr-01.S"
 #define SIGUPD_COUNT 150
 #define rvtest_mtrap_routine
 #define rvtest_strap_routine
@@ -42,12 +42,14 @@
 
 RVTEST_BEGIN
 
-#if RVMODEL_PMP_GRAIN != 0
-  #define g   (1 << (RVMODEL_PMP_GRAIN + 2))
+#if UDB_PMP_GRANULARITY != 2
+  #define g   (1 << (UDB_PMP_GRANULARITY))
 #else
-  #define g   (1 << (RVMODEL_PMP_GRAIN + 3))
+  #define g   (1 << (UDB_PMP_GRANULARITY + 1))
 #endif
 .macro VERIFICATION_RWX ADDRESS TEST_CASE
+
+    RVMODEL_FENCEI
 
     LI(x4, 0xACCE)                      // Store a value which is to be checked in trap handler
     // Execution Access Check
@@ -62,6 +64,7 @@ RVTEST_BEGIN
     nop
     RVTEST_SIGUPD(x2, x5, x4, a4, \TEST_CASE\()_17, test_17_str)
 
+    LI(x4, 0xACCE)                      // Store a value which is to be checked in trap handler
     addi a4, a4, -4                     // REGIONSTART - 4
     LA(x1, 2f)                          // Store the return Address in x1
     \TEST_CASE\()_18:
@@ -73,6 +76,7 @@ RVTEST_BEGIN
     nop
     RVTEST_SIGUPD(x2, x5, x4, a4, \TEST_CASE\()_18, test_18_str)
 
+    LI(x4, 0xACCE)                      // Store a value which is to be checked in trap handler
     addi a4, a4, 8                      // REGIONSTART + 4
     LA(x1, 3f)                          // Store the return Address in x1
     \TEST_CASE\()_19:
@@ -84,7 +88,8 @@ RVTEST_BEGIN
     nop
     RVTEST_SIGUPD(x2, x5, x4, a4, \TEST_CASE\()_19, test_19_str)
 
-    addi a4, a4, (g-8)                  // REGIONSTART + g - 4
+    li   t0, (g - 8)
+    add  a4, a4, t0                  // REGIONSTART + g - 4
     LA(x1, 4f)                          // Store the return Address in x1
     \TEST_CASE\()_20:
     jalr ra, 0(a4)
@@ -144,7 +149,8 @@ RVTEST_BEGIN
     nop
     RVTEST_SIGUPD(x2, x5, x4, a4, \TEST_CASE\()_5, test_5_str)
 
-    addi a5, a5, (g-8)                                      // REGIONSTART + g - 4
+    li   t0, (g - 8)
+    add a5, a5, t0                                      // REGIONSTART + g - 4
 
     \TEST_CASE\()_6:
     sw a4, 0(a5)
@@ -208,7 +214,8 @@ RVTEST_BEGIN
     nop
     RVTEST_SIGUPD(x2, x5, x4, a4, \TEST_CASE\()_14, test_14_str)                                   // Signature update
 
-    addi a5, a5, (g-8)                                      // REGIONSTART + g - 4
+    li   t0, (g - 8)
+    add a5, a5, t0                                      // REGIONSTART + g - 4
 
     \TEST_CASE\()_15:
     lw a4, 0(a5)
@@ -229,14 +236,14 @@ RVTEST_BEGIN
 main:
     // Loop to SET pmpcfg REGs to zero
     .set pmpcfgi, CSR_PMPCFG0
-    .rept RVMODEL_NUM_PMPS/4
+    .rept UDB_NUM_PMP_ENTRIES/4
     csrw pmpcfgi , x0
     .set pmpcfgi, pmpcfgi+1
     .endr
 
     // Loop to SET pmpaddr REGs to zero
     .set pmpaddri, CSR_PMPADDR0
-    .rept RVMODEL_NUM_PMPS
+    .rept UDB_NUM_PMP_ENTRIES
     csrw pmpaddri, x0
     .set pmpaddri, pmpaddri+1
     .endr
@@ -251,9 +258,9 @@ main:
 
 #define PMPADDRESS_TOP_GLOBAL        -1                                                // All memory region
 #define REGIONSTART            TEST_FOR_EXECUTION    // RAM_BASE_ADDR + PROGRAM_SIZE
-#if RVMODEL_PMP_GRAIN != 0
-    #define PMP_MASK            ~((1 << (RVMODEL_PMP_GRAIN - 1))-1)
-    #define PMP_REGION_SIZE     (1 << (RVMODEL_PMP_GRAIN - 1)) - 1
+#if UDB_PMP_GRANULARITY != 2
+    #define PMP_MASK            ~((1 << (UDB_PMP_GRANULARITY - 3))-1)
+    #define PMP_REGION_SIZE     (1 << (UDB_PMP_GRANULARITY - 3)) - 1
 #else
     #define PMP_MASK            ~0
     #define PMP_REGION_SIZE     0
@@ -274,8 +281,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr5, x5
 
     LI(t1, PMPREGION_LXWR_1000)
@@ -289,8 +298,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr4, x5
 
     LI(t1, PMPREGION_LXWR_1000|PMPREGION_LXWR_1001)
@@ -304,8 +315,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr3, x5
 
     LI(t1, PMPREGION_LXWR_1011)
@@ -349,14 +362,16 @@ test_20_str: .string "\"test: 15; cp: pmps_napot_legal_lwxr_jalr_address+g-4\""
 test_21_str: .string "\"test: 16; cp: pmps_napot_legal_lwxr_jalr_address+g\""
 
 .align 12
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION_0:
-    .rept 1024
-    nop
+    .rept (g>>2)
+    jr ra
     .endr
 
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION:
-    .rept (1<<(RVMODEL_PMP_GRAIN+2))
-    nop
+    .rept (g>>2)
+    jr ra
     .endr
 
 RETURN_INSTRUCTION:

@@ -29,16 +29,13 @@
 #   MXLEN: 64
 #   NUM_PMP_ENTRIES: '>0'
 #   PMP_GRANULARITY: 2
-# MARCH: rv64i_zca_zicsr
+# MARCH: rv64i_zca_zicsr_zifencei
 ##### END_TEST_CONFIG #####
 
 // Define the name of this test file for reporting and the size of the signature region
 #define TEST_FILE "pmpzca_cret_napot.S"
 #define SIGUPD_COUNT 50
 
-// Enable trap handler
-#define rvtest_mtrap_routine
-#define RVTEST_PRIV_TEST
 
 #define SKIP_MEPC
 
@@ -59,14 +56,14 @@ RVTEST_BEGIN
 main:
     // Loop to SET ALL pmpcfg REGs to zero
     .set pmpcfgi, CSR_PMPCFG0
-    .rept RVMODEL_NUM_PMPS/8
+    .rept UDB_NUM_PMP_ENTRIES/8
     csrw pmpcfgi , x0
     .set pmpcfgi, pmpcfgi+2
     .endr
 
     // Loop to SET ALL pmpaddr REGs to zero
     .set pmpaddri, CSR_PMPADDR0
-    .rept RVMODEL_NUM_PMPS
+    .rept UDB_NUM_PMP_ENTRIES
     csrw pmpaddri, x0
     .set pmpaddri, pmpaddri+1
     .endr
@@ -106,10 +103,6 @@ main:
     //Test case4
     VERIFICATION_RWX TEST_FOR_EXECUTION_3, test4
 
-    j exit                                                  // Verification Complete, exit the test
-
-
-exit:
 
 RVTEST_CODE_END
 RVTEST_DATA_BEGIN
@@ -118,8 +111,8 @@ RVTEST_DATA_BEGIN
 // Test case strings for reporting
 test_1_str: .string "\"test: 1; cp: pmpzca_cret_napot_execute\""
 
-.align 12
-.skip (0x1000-2)
+.align 10
+.skip (0x802)
 TEST_FOR_EXECUTION_0:
     ret                                                         // Compressed return just before the start of region
 

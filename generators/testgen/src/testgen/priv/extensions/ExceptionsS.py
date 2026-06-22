@@ -35,7 +35,7 @@ _CG = "ExceptionsS_cg"
 
 def _generate_illegal_instruction_csr_tests(test_data: TestData) -> list[str]:
     covergroup, coverpoint = _CG, "cp_illegal_instruction_csr"
-    dest_regs = test_data.int_regs.get_registers(2, exclude_regs=[0])
+    dest_regs = test_data.int_regs.get_registers(2)
 
     lines = [
         comment_banner(coverpoint, "Illegal Instruction"),
@@ -101,8 +101,7 @@ def _generate_medeleg_msu_tests(test_data: TestData, mode_tag: str, priv_mode: i
     covergroup = _CG
     coverpoint = "cp_medeleg_msu"
 
-    # excluding x6, x7, x9 since RVTEST_GOTO_LOWER_MODE may clobber these registers
-    addr_reg, data_reg, check_reg, medeleg_reg = test_data.int_regs.get_registers(4, exclude_regs=[0, 1, 6, 7, 9])
+    addr_reg, data_reg, check_reg, medeleg_reg = test_data.int_regs.get_registers(4)
 
     lines = []
 
@@ -310,7 +309,7 @@ def _generate_medeleg_msu_tests(test_data: TestData, mode_tag: str, priv_mode: i
 
 def _generate_stvec_tests(test_data: TestData, mode_tag: str, priv_mode: int) -> list[str]:
     covergroup, coverpoint = _CG, "cp_stvec"
-    addr_reg = test_data.int_regs.get_register(exclude_regs=[0])
+    addr_reg = test_data.int_regs.get_register()
 
     lines = [
         "#ifdef RVMODEL_ACCESS_FAULT_ADDRESS",
@@ -351,7 +350,7 @@ def _generate_stvec_tests(test_data: TestData, mode_tag: str, priv_mode: int) ->
 
 def _generate_xstatus_ie_tests(test_data: TestData, mode_tag: str, priv_mode: int) -> list[str]:
     covergroup, coverpoint = _CG, "cp_xstatus_ie"
-    save_reg, mask_mie, mask_sie, medeleg_reg = test_data.int_regs.get_registers(4, exclude_regs=[0, 6, 7, 9])
+    save_reg, mask_mie, mask_sie, medeleg_reg = test_data.int_regs.get_registers(4)
 
     lines = [
         comment_banner(coverpoint, "xstatus Interrupt Enable"),
@@ -420,26 +419,12 @@ def _generate_xstatus_ie_tests(test_data: TestData, mode_tag: str, priv_mode: in
 
 @add_priv_test_generator(
     "ExceptionsS",
-    required_extensions=["I", "S", "Zicsr", "Sm"],
+    required_extensions=["S"],
     extra_defines=["#define SKIP_MEPC"],
 )
 def make_exceptionss(test_data: TestData) -> list[str]:
     """Main entry point for S-mode exception test generation (refactored)."""
     lines: list[str] = []
-
-    # Initialize scratch memory
-    lines.extend(
-        [
-            "# Initialize scratch memory with test data",
-            " LA(x10, scratch)",
-            " LI(x11, 0xDEADBEEF)",
-            " sw x11, 0(x10)",
-            " sw x11, 4(x10)",
-            " sw x11, 8(x10)",
-            " sw x11, 12(x10)",
-            "",
-        ]
-    )
 
     lines.extend(["RVTEST_GOTO_LOWER_MODE Smode  # use S-mode"])
     lines.extend(generate_instr_adr_misaligned_jal_tests(test_data, _CG))

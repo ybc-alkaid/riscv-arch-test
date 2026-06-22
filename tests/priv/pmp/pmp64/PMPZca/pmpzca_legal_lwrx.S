@@ -27,16 +27,13 @@
 # params:
 #   MXLEN: 64
 #   NUM_PMP_ENTRIES: '>0'
-# MARCH: rv64i_zca_zicsr
+# MARCH: rv64i_zca_zicsr_zifencei
 ##### END_TEST_CONFIG #####
 
 // Define the name of this test file for reporting and the size of the signature region
 #define TEST_FILE "pmpzca_legal_lxwr.S"
 #define SIGUPD_COUNT 50
 
-// Enable trap handler
-#define rvtest_mtrap_routine
-#define RVTEST_PRIV_TEST
 
 #define SKIP_MEPC
 
@@ -140,14 +137,14 @@ RVTEST_BEGIN
 main:
     // Loop to SET ALL pmpcfg REGs to zero
     .set pmpcfgi, CSR_PMPCFG0
-    .rept RVMODEL_NUM_PMPS/8
+    .rept UDB_NUM_PMP_ENTRIES/8
     csrw pmpcfgi , x0
     .set pmpcfgi, pmpcfgi+2
     .endr
 
     // Loop to SET ALL pmpaddr REGs to zero
     .set pmpaddri, CSR_PMPADDR0
-    .rept RVMODEL_NUM_PMPS
+    .rept UDB_NUM_PMP_ENTRIES
     csrw pmpaddri, x0
     .set pmpaddri, pmpaddri+1
     .endr
@@ -162,9 +159,9 @@ main:
 
 #define PMPADDRESS_TOP_GLOBAL        -1                                                // All memory region
 #define REGIONSTART            TEST_FOR_EXECUTION
-#if RVMODEL_PMP_GRAIN != 0
-    #define PMP_MASK            ~((1 << (RVMODEL_PMP_GRAIN - 1))-1)
-    #define PMP_REGION_SIZE     (1 << (RVMODEL_PMP_GRAIN - 1)) - 1
+#if UDB_PMP_GRANULARITY != 2
+    #define PMP_MASK            ~((1 << (UDB_PMP_GRANULARITY - 3))-1)
+    #define PMP_REGION_SIZE     (1 << (UDB_PMP_GRANULARITY - 3)) - 1
 #else
     #define PMP_MASK            ~0
     #define PMP_REGION_SIZE     0
@@ -182,8 +179,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr5, x5
 
     LI(x4, PMPREGION_LXWR_1000)
@@ -195,8 +194,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr4, x5
 
     LI(x4, PMPREGION_LXWR_1001)
@@ -209,8 +210,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr3, x5
 
     LI(x4, PMPREGION_LXWR_1011)
@@ -223,8 +226,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr2, x5
 
     LI(x4, PMPREGION_LXWR_1100)
@@ -237,8 +242,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr1, x5
 
     LI(x4, PMPREGION_LXWR_1101)
@@ -251,8 +258,10 @@ main:
 
     LA(x5, REGIONSTART)
     srl x5, x5, PMP_SHIFT
-    andi x5, x5, PMP_MASK
-    ori x5, x5, PMP_REGION_SIZE
+    LI(x6, PMP_MASK)
+    and x5, x5, x6
+    LI(x6, PMP_REGION_SIZE)
+    or x5, x5, x6
     csrw pmpaddr0, x5
 
     LI(x4, PMPREGION_LXWR_1111)
@@ -278,9 +287,14 @@ test_3_str: .string "\"test: 3; cp: pmpzca_legal_lxwr_c.jalr\""
 test_4_str: .string "\"test: 4; cp: pmpzca_legal_lxwr_sd\""
 test_5_str: .string "\"test: 5; cp: pmpzca_legal_lxwr_ld\""
 
-.align 13
+.align 12
+.align (UDB_PMP_GRANULARITY)
+TEST_FOR_EXECUTION_0:
+    jalr x0, x1, 0
+
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION:
-    .rept (1<<RVMODEL_PMP_GRAIN+2)
+    .rept (1<<UDB_PMP_GRANULARITY)
     c.nop
     c.nop
     .endr

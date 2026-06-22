@@ -30,17 +30,15 @@
 # REQUIRED_EXTENSIONS:  ['Sm']
 # params:
 #   MXLEN: 32
+#   PMP_GRANULARITY: 2
 #   NUM_PMP_ENTRIES: '>0'
-# MARCH: rv32i_zicsr
+# MARCH: rv32i_zicsr_zifencei
 ##### END_TEST_CONFIG #####
 
 // Define the name of this test file for reporting and the size of the signature region
 #define TEST_FILE "pmpsm_cfg_napot_all.S"
 #define SIGUPD_COUNT 50
 
-// Enable trap handler
-#define rvtest_mtrap_routine
-#define RVTEST_PRIV_TEST
 
 // Include framework macros
 #include "riscv_arch_test.h"
@@ -128,14 +126,14 @@ RVTEST_BEGIN
 main:
     // Loop to SET ALL pmpcfg REGs to zero
     .set pmpcfgi, CSR_PMPCFG0
-    .rept RVMODEL_NUM_PMPS/4
+    .rept UDB_NUM_PMP_ENTRIES/4
     csrw pmpcfgi , x0
     .set pmpcfgi, pmpcfgi+1
     .endr
 
     // Loop to SET ALL pmpaddr REGs to zero
     .set pmpaddri, CSR_PMPADDR0
-    .rept RVMODEL_NUM_PMPS
+    .rept UDB_NUM_PMP_ENTRIES
     csrw pmpaddri, x0
     .set pmpaddri, pmpaddri+1
     .endr
@@ -224,8 +222,6 @@ main:
     csrw pmpcfg0, x4
 
     VERIFICATION_RWX    TEST_FOR_EXECUTION, test_6
-
-
 RVTEST_CODE_END
 
 RVTEST_DATA_BEGIN
@@ -242,13 +238,14 @@ test_5_str: .string "\"test: 5; cp: pmpm_aligned_sw_address+4\""
 test_6_str: .string "\"test: 6; cp: pmpm_aligned_lw_address+4\""
 
 .align 12
-.align (RVMODEL_PMP_GRAIN+2)
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION_0:
     .rept 1024
-    nop
+    jr ra
     .endr
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION:
-    .rept (1<<(RVMODEL_PMP_GRAIN+2))
+    .rept (1<<(UDB_PMP_GRANULARITY))
     nop
     .endr
 

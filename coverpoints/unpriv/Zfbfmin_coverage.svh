@@ -40,7 +40,7 @@ covergroup Zfbfmin_fcvt_bf16_s_cg with function sample(ins_t ins);
         wildcard bins NX1  = (5'b????1 => 5'b????1);
     }
 
-    cp_csr_frm : coverpoint get_csr_val(ins.hart, ins.issue, `SAMPLE_BEFORE, "fcsr", "frm")  iff (ins.trap == 0 & ins.current.insn[14:12] == 3'b111)  {
+    cp_csr_frm : coverpoint get_csr_val(ins.hart, ins.issue, `SAMPLE_BEFORE, "frm", "frm")  iff (ins.trap == 0 & ins.current.insn[14:12] == 3'b111)  {
         // Value of FCSR.frm during dynamic rounding
         bins rne  = {3'b000};
         bins rtz  = {3'b001};
@@ -230,7 +230,7 @@ covergroup Zfbfmin_fmv_h_x_cg with function sample(ins_t ins);
     }
 
     cp_rs1_edges : coverpoint unsigned'(ins.current.rs1_val)  iff (ins.trap == 0 )  {
-        `ifdef XLEN32
+        `ifdef UDB_MXLEN_32
             bins zero     = {0};
             bins one      = {32'b00000000000000000000000000000001};
             bins two      = {32'b00000000000000000000000000000010};

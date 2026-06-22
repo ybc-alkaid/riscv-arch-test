@@ -57,7 +57,7 @@ covergroup ExceptionsSv_cg with function sample(ins_t ins);
     }
     medeleg_walk: coverpoint ins.current.csr[CSR_MEDELEG] {
         bins zeros                    = {16'b0000_0000_0000_0000};
-        `ifndef COVER_ZCA
+        `ifndef ZCA_SUPPORTED
             bins instrmisaligned_enabled  = {16'b0000_0000_0000_0001};
         `endif
         bins illegalinstr_enabled     = {16'b0000_0000_0000_0100};
@@ -135,7 +135,7 @@ covergroup ExceptionsSv_cg with function sample(ins_t ins);
 
     // Access fault coverpoints
     `ifdef RVMODEL_ACCESS_FAULT_ADDRESS
-        `ifdef XLEN64 // Number of physical address bits is different by XLEN, either 34 or 56
+        `ifdef UDB_MXLEN_64 // Number of physical address bits is different by XLEN, either 34 or 56
             i_phys_address_nonexistent: coverpoint ({ins.current.phys_adr_i[55:2], 2'b00} == `RVMODEL_ACCESS_FAULT_ADDRESS) {
                 // auto fill 1/0 for the physical address being valid
             }

@@ -63,7 +63,7 @@ covergroup ExceptionsS_cg with function sample(ins_t ins);
         wildcard bins lhu = {LHU};
         wildcard bins lb  = {LB};
         wildcard bins lbu = {LBU};
-        `ifdef XLEN64
+        `ifdef UDB_MXLEN_64
             wildcard bins ld  = {LD};
             wildcard bins lwu = {LWU};
         `endif
@@ -72,7 +72,7 @@ covergroup ExceptionsS_cg with function sample(ins_t ins);
         wildcard bins sb = {SB};
         wildcard bins sh = {SH};
         wildcard bins sw = {SW};
-        `ifdef XLEN64
+        `ifdef UDB_MXLEN_64
             wildcard bins sd = {SD};
         `endif
     }
@@ -122,7 +122,7 @@ covergroup ExceptionsS_cg with function sample(ins_t ins);
     }
     medeleg_walk: coverpoint ins.current.csr[CSR_MEDELEG] {
         bins zeros                    = {16'b0000_0000_0000_0000};
-        `ifndef COVER_ZCA
+        `ifndef ZCA_SUPPORTED
             bins instrmisaligned_enabled  = {16'b0000_0000_0000_0001};
         `endif
         bins instraccessfault_enabled = {16'b0000_0000_0000_0010};

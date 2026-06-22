@@ -31,16 +31,13 @@
 # params:
 #   MXLEN: 64
 #   NUM_PMP_ENTRIES: '>0'
-# MARCH: rv64i_zicsr
+# MARCH: rv64i_zicsr_zifencei
 ##### END_TEST_CONFIG #####
 
 // Define the name of this test file for reporting and the size of the signature region
 #define TEST_FILE "pmpsm_tor_boundary-01.S"
 #define SIGUPD_COUNT 50
 
-// Enable trap handler
-#define rvtest_mtrap_routine
-#define RVTEST_PRIV_TEST
 
 // Include framework macros
 #include "riscv_arch_test.h"
@@ -48,7 +45,7 @@
 // Set up test environment and declare main entry point
 RVTEST_BEGIN
 
-#define g   (1 << (RVMODEL_PMP_GRAIN + 2))
+#define g   (1 << (UDB_PMP_GRANULARITY))
 
 .macro VERIFICATION_RWX ADDRESS TEST_CASE
 
@@ -70,14 +67,14 @@ RVTEST_BEGIN
 main:
     // Loop to SET ALL pmpcfg REGs to zero
     .set pmpcfgi, CSR_PMPCFG0
-    .rept RVMODEL_NUM_PMPS/8
+    .rept UDB_NUM_PMP_ENTRIES/8
     csrw pmpcfgi , x0
     .set pmpcfgi, pmpcfgi+2
     .endr
 
     // Loop to SET ALL pmpaddr REGs to zero
     .set pmpaddri, CSR_PMPADDR0
-    .rept RVMODEL_NUM_PMPS
+    .rept UDB_NUM_PMP_ENTRIES
     csrw pmpaddri, x0
     .set pmpaddri, pmpaddri+1
     .endr
@@ -101,7 +98,7 @@ main:
     csrw pmpaddr0, x4
 
     LA(x4, REGIONSTART)
-    li t0, g
+    LI(t0, g)
     add x4, x4, t0
     srl x4, x4, PMP_SHIFT
     csrw pmpaddr1, x4
@@ -123,14 +120,12 @@ test_1_str: .string "\"test: 1; cp: cp_tor_boundary_sd\""
 test_2_str: .string "\"test: 2; cp: cp_tor_boundary_ld\""
 
 .align 12
-.align (RVMODEL_PMP_GRAIN+2)
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION_0:
-    .rept 1024
-    nop
-    .endr
+    jr ra
 
 TEST_FOR_EXECUTION:
-    .rept (1<<(RVMODEL_PMP_GRAIN+2))
+    .rept (1<<(UDB_PMP_GRANULARITY))
     nop
     .endr
 

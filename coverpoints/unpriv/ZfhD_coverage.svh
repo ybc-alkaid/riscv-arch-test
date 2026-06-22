@@ -178,7 +178,7 @@ covergroup ZfhD_fcvt_h_d_cg with function sample(ins_t ins);
         wildcard bins NX1  = (5'b????1 => 5'b????1);
     }
 
-    cp_csr_frm : coverpoint get_csr_val(ins.hart, ins.issue, `SAMPLE_BEFORE, "fcsr", "frm")  iff (ins.trap == 0 & ins.current.insn[14:12] == 3'b111)  {
+    cp_csr_frm : coverpoint get_csr_val(ins.hart, ins.issue, `SAMPLE_BEFORE, "frm", "frm")  iff (ins.trap == 0 & ins.current.insn[14:12] == 3'b111)  {
         // Value of FCSR.frm during dynamic rounding
         bins rne  = {3'b000};
         bins rtz  = {3'b001};
@@ -1087,7 +1087,7 @@ covergroup ZfhD_fsub_h_cg with function sample(ins_t ins);
 
 endgroup
 // ---------------------
-`ifdef XLEN64
+`ifdef UDB_MXLEN_64
 covergroup ZfhD_fcvt_h_l_cg with function sample(ins_t ins);
     option.per_instance = 0;
     cp_NaNBox_D_H : coverpoint unsigned'(ins.current.fd_val[63:16])  iff (ins.trap == 0 )  {
@@ -1240,7 +1240,7 @@ function void zfhd_sample(int hart, int issue, ins_t ins);
         "fsub.h"     : begin
             ZfhD_fsub_h_cg.sample(ins);
         end
-`ifdef XLEN64
+`ifdef UDB_MXLEN_64
         "fcvt.h.l"     : begin
             ZfhD_fcvt_h_l_cg.sample(ins);
         end

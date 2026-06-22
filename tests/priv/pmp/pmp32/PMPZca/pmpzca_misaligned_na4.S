@@ -31,16 +31,13 @@
 #   MXLEN: 32
 #   NUM_PMP_ENTRIES: '>0'
 #   PMP_GRANULARITY: 2
-# MARCH: rv32i_zca_zicsr
+# MARCH: rv32i_zca_zicsr_zifencei
 ##### END_TEST_CONFIG #####
 
 // Define the name of this test file for reporting and the size of the signature region
 #define TEST_FILE "pmpzca_aligned_na4.S"
 #define SIGUPD_COUNT 50
 
-// Enable trap handler
-#define rvtest_mtrap_routine
-#define RVTEST_PRIV_TEST
 
 #define SKIP_MEPC
 
@@ -63,14 +60,14 @@ RVTEST_BEGIN
 main:
     // Loop to SET ALL pmpcfg REGs to zero
     .set pmpcfgi, CSR_PMPCFG0
-    .rept RVMODEL_NUM_PMPS/4
+    .rept UDB_NUM_PMP_ENTRIES/4
     csrw pmpcfgi , x0
     .set pmpcfgi, pmpcfgi+1
     .endr
 
     // Loop to SET ALL pmpaddr REGs to zero
     .set pmpaddri, CSR_PMPADDR0
-    .rept RVMODEL_NUM_PMPS
+    .rept UDB_NUM_PMP_ENTRIES
     csrw pmpaddri, x0
     .set pmpaddri, pmpaddri+1
     .endr
@@ -102,7 +99,8 @@ main:
     csrw pmpcfg0, x4
 
     LA(x5, REGIONSTART)
-    addi x5, x5, REGION_SIZE
+    LI(x4, REGION_SIZE)
+    add x5, x5, x4
     srl x5, x5, PMP_SHIFT  // This will create dynamic PMP_ADDRESS_1
     csrw pmpaddr1, x5
 
@@ -110,7 +108,8 @@ main:
     csrw pmpcfg0, x4
 
     LA(x5, REGIONSTART)
-    addi x5, x5, 2*REGION_SIZE
+    LI(x4, 2*REGION_SIZE)
+    add x5, x5, x4
     srl x5, x5, PMP_SHIFT  // This will create dynamic PMP_ADDRESS_2
     csrw pmpaddr2, x5
 
@@ -125,7 +124,6 @@ main:
 
    j exit                                                        // Verification Complete, exit the test
 
-
 exit:
 
 RVTEST_CODE_END
@@ -136,13 +134,20 @@ RVTEST_DATA_BEGIN
 // Test case strings for reporting
 test_1_str: .string "\"test: 1; cp: pmpzca_aligned_na4_region_execute\""
 
-.align 13
+.align 12
+.align (UDB_PMP_GRANULARITY)
+TEST_FOR_EXECUTION_X:
+    jalr x0, x1, 0
+
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION_0:
     nop
 
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION_1:
     jalr x0, x1, 0                                                // Uncompressed return straddling the start of 2nd region
 
+.align (UDB_PMP_GRANULARITY)
 TEST_FOR_EXECUTION_2:
     jalr x0, x1, 0                                              // Uncompressed return straddling the end of 2nd region
 

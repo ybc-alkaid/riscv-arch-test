@@ -2,7 +2,7 @@
 //
 // RISC-V Architectural Functional Coverage Covergroups
 //
-// Written: Corey Hickson chickson@hmc.edu 16 Feb 2025, Modified: Sadhvi Narayanan sanarayanan@hmc.edu
+// Written: Corey Hickson chickson@hmc.edu 16 Feb 2025, Sadhvi Narayanan sanarayanan@hmc.edu April 2026
 //
 // Copyright (C) 2024 Harvey Mudd College, 10x Engineers, UET Lahore, Habib University
 //
@@ -27,6 +27,9 @@ covergroup InterruptsU_cg with function sample(ins_t ins);
     }
     mstatus_tw_one: coverpoint ins.current.csr[CSR_MSTATUS][21] {
         bins one = {1};  // Only TW=1
+    }
+    mstatus_tw_zero: coverpoint ins.current.csr[CSR_MSTATUS][21] {
+        bins zero = {0};  // Only TW=0
     }
     mie_msie_one: coverpoint ins.current.csr[CSR_MIE][3] {
         bins one = {1};
@@ -63,7 +66,7 @@ covergroup InterruptsU_cg with function sample(ins_t ins);
 
     // Note: External interrupts (MEI) not supported in Sail simulator yet
     cp_user_mei:    cross priv_mode_u, mtvec_mode, mstatus_mie, mie_meie_one,   mip_meip;
-    cp_wfi:         cross priv_mode_u, wfi,        mstatus_mie, mstatus_tw, mie_mtie_one;
+    cp_wfi:         cross priv_mode_u, wfi,        mstatus_mie, mstatus_tw_zero, mie_mtie_one;
     cp_wfi_timeout: cross priv_mode_u, wfi,        mstatus_mie, mstatus_tw_one, mie_mtie;
 
 endgroup
