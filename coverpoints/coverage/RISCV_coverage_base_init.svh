@@ -254,12 +254,13 @@
         `cover_info("//      Sscounterenw - Enabled");
         `include "Sscounterenw_coverage_init.svh"
     `endif
-    `ifdef COVER_SSPMPSM
-        `cover_info("//      SspmpSm - Enabled");
-        `include "SspmpSm_coverage_init.svh"
     `ifdef COVER_SSNPM
         `cover_info("//      Ssnpm - Enabled");
         `include "Ssnpm_coverage_init.svh"
+    `endif
+    `ifdef COVER_SSPMPSM
+        `cover_info("//      SspmpSm - Enabled");
+        `include "SspmpSm_coverage_init.svh"
     `endif
     `ifdef COVER_SSSTATEEN
         `cover_info("//      Ssstateen - Enabled");

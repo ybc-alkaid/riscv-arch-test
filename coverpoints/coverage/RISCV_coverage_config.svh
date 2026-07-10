@@ -194,10 +194,11 @@
 `ifdef SSCOUNTERENW_COVERAGE
   `include "Sscounterenw_coverage.svh"
 `endif
-`ifdef SSPMPSM_COVERAGE
-  `include "SspmpSm_coverage.svh"
 `ifdef SSNPM_COVERAGE
   `include "Ssnpm_coverage.svh"
+`endif
+`ifdef SSPMPSM_COVERAGE
+  `include "SspmpSm_coverage.svh"
 `endif
 `ifdef SSSTATEEN_COVERAGE
   `include "Ssstateen_coverage.svh"
